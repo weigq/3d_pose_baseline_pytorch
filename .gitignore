@@ -17,6 +17,8 @@
 # for data and experiments directories
 ckpt/
 data/
+h36m/
+h36m_ft/
 
 # for jupyter notebook
 .ipynb_checkpoints/
