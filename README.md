@@ -58,15 +58,22 @@ This is the code for the paper
 ### Train
 
 1. Train on Human3.6M groundtruth 2d joints:
+    ```
+
+    ```
+
+    You will get the training and testing loss curves like:
+
+    ![log](./img/log_gt.png)
 
 2. Train on Human3.6M 2d joints detected by stacked hourglass:
-```
+    ```
 
-```
+    ```
 
-You will get the training and testing loss curves like:
+    You will get the training and testing loss curves like:
 
-![log](./img/log_ft.png)
+    ![log](./img/log_ft.png)
 
 ### Test
 
