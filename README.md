@@ -15,6 +15,18 @@ This is the code for the paper
 }
 ```
 
+## WIP
+
+
+ - [ ] Training code
+ - [x] Testing code
+
+### Datasets
+
+ - [x] Human3.6M
+ - [ ] HumanEva
+
+
 ## Dependencies
 
 * [h5py](http://www.h5py.org/)
@@ -41,9 +53,22 @@ This is the code for the paper
 
 ## Usage
 
-### Data preprocessing
+### Data preprocess
 
-Generate the processed data.
+### Train
+
+1. Train on Human3.6M groundtruth 2d joints:
+
+2. Train on Human3.6M 2d joints detected by stacked hourglass:
+```
+
+```
+
+You will get the training and testing loss curves like:
+
+![log](./img/log_ft.png)
+
+### Test
 
 ## License
 MIT

@@ -23,3 +23,5 @@ h36m_ft/
 # for jupyter notebook
 .ipynb_checkpoints/
 Would skip repository src/progress
+
+!img/*.png
