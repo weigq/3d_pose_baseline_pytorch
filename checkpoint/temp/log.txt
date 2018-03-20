@@ -1,0 +1,1 @@
+epoch	lr	loss_train	loss_test	err_test	

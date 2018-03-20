@@ -55,7 +55,7 @@ class LinearModel(nn.Module):
         # 2d joints
         self.input_size =  16 * 2
         # 3d joints
-        self.output_size = 14 * 3
+        self.output_size = 16 * 3
 
         # process input to linear size
         self.w1 = nn.Linear(self.input_size, self.linear_size)

@@ -79,5 +79,12 @@ This is the code for the paper
 
 ### Test
 
+1. You can download the [pretrianed model](https://drive.google.com/file/d/1NUY8oZoLKY9DP63Jg_ZE96_DEJKiVvRp/view?usp=sharing) on ground-truth 2d pose for quick demo.
+
+    ```
+    python main.py --load $PATH TO gt_ckpt_best.pth.tar --test
+    ```
+    and you will get the results:
+
 ## License
 MIT

@@ -43,6 +43,8 @@ class Options:
         self.parser.add_argument('--test',           dest='test', action='store_true', help='test')
         self.parser.add_argument('--resume',         dest='resume', action='store_true', help='resume to train')
 
+        self.parser.add_argument('--action',         type=str, default='All', choices=actions, help='All for all actions')
+
         # ===============================================================
         #                     Model options
         # ===============================================================
@@ -53,7 +55,7 @@ class Options:
         # ===============================================================
         #                     Running options
         # ===============================================================
-        self.parser.add_argument('--use_hg',         dest='use_sh', action='store_true', help='whether use 2d pose from hourglass')
+        self.parser.add_argument('--use_hg',         dest='use_hg', action='store_true', help='whether use 2d pose from hourglass')
         self.parser.add_argument('--lr',             type=float,  default=1.0e-3)
         self.parser.add_argument('--lr_decay',       type=int,    default=100000, help='# steps of lr decay')
         self.parser.add_argument('--lr_gamma',       type=float,  default=0.96)
