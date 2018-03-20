@@ -41,6 +41,7 @@ class Options:
         self.parser.add_argument('--load',           type=str, default='', help='path to load a pretrained checkpoint')
 
         self.parser.add_argument('--test',           dest='test', action='store_true', help='test')
+        self.parser.add_argument('--resume',         dest='resume', action='store_true', help='resume to train')
 
         # ===============================================================
         #                     Model options

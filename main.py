@@ -16,13 +16,14 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
 from opt import Options
-import src.loader as loader
+from src.procrustes import get_transformation
+import src.data_process as data_process
 from src import Bar
 import src.utils as utils
 import src.misc as misc
 import src.log as log
 
-from src.model.model import LinearModel, weight_init
+from src.model import LinearModel, weight_init
 from src.datasets.human36m import Human36M
 
 
@@ -55,6 +56,7 @@ def main(opt):
         model.load_state_dict(ckpt['state_dict'])
         optimizer.load_state_dict(ckpt['optimizer'])
         print(">>> ckpt loaded (epoch: {} | err: {})".format(start_epoch, err_best))
+    if opt.resume:
         logger = log.Logger(os.path.join(opt.ckpt, 'log.txt'), resume=True)
     else:
         logger = log.Logger(os.path.join(opt.ckpt, 'log.txt'))
@@ -73,7 +75,7 @@ def main(opt):
     stat_3d = torch.load(os.path.join(opt.data_dir, 'stat_3d.pth.tar'))
     std_3d = stat_3d['std'][stat_3d['dim_use']]
     mean_3d = stat_3d['mean'][stat_3d['dim_use']]
-    # load dataset
+    # test
     if opt.test:
         err_set = []
         for action in actions:
@@ -95,6 +97,7 @@ def main(opt):
         print (">>>\nERRORS: {}".format(np.array(err_set).mean()))
         sys.exit()
 
+    # load dadasets for training
     test_loader = DataLoader(
         dataset=Human36M(actions=actions, data_path=opt.data_dir, use_hg=opt.use_hg, is_train=False),
         batch_size=opt.test_batch,
@@ -115,9 +118,9 @@ def main(opt):
         print('>>> epoch: {} | lr: {:.5f}'.format(epoch + 1, lr_now))
 
         # per epoch
-        glob_step, lr_now, loss_train = train(
-            train_loader, model, criterion, optimizer,
-            lr_init=opt.lr, lr_now=lr_now, glob_step=glob_step, lr_decay=opt.lr_decay, gamma=opt.lr_gamma)
+        # glob_step, lr_now, loss_train = train(
+        #     train_loader, model, criterion, optimizer,
+        #     lr_init=opt.lr, lr_now=lr_now, glob_step=glob_step, lr_decay=opt.lr_decay, gamma=opt.lr_gamma)
         loss_test, err_test = test(test_loader, model, criterion)
 
         # update log file
@@ -149,7 +152,7 @@ def main(opt):
     logger.close()
 
 
-def test(test_loader, model, criterion, mean_3d, std_3d):
+def test(test_loader, model, criterion, mean_3d, std_3d, procrustes=False):
     losses = utils.AverageMeter()
 
     model.eval()
@@ -174,8 +177,8 @@ def test(test_loader, model, criterion, mean_3d, std_3d):
         tars = (targets - mean_3d) / std_3d
 
         # calculate erruracy
-        targets_unnorm = loader.unNormalizeData(tars.data.cpu().numpy(), stat_3d['mean'], stat_3d['std'], stat_3d['dim_use'])
-        outputs_unnorm = loader.unNormalizeData(outputs.data.cpu().numpy(), stat_3d['mean'], stat_3d['std'], stat_3d['dim_use'])
+        targets_unnorm = data_process.unNormalizeData(tars.data.cpu().numpy(), stat_3d['mean'], stat_3d['std'], stat_3d['dim_use'])
+        outputs_unnorm = data_process.unNormalizeData(outputs.data.cpu().numpy(), stat_3d['mean'], stat_3d['std'], stat_3d['dim_use'])
 
         # remove dim ignored
         dim_use = np.hstack((np.arange(3), stat_3d['dim_use']))
@@ -183,13 +186,13 @@ def test(test_loader, model, criterion, mean_3d, std_3d):
         outputs_use = outputs_unnorm[:, dim_use]
         targets_use = targets_unnorm[:, dim_use]
 
-        # for ba in range(inps.size(0)):
-        #     gt = targets_use[ba].reshape(-1, 3)
-        #     out = outputs_use[ba].reshape(-1, 3)
-        #     _, Z, T, b, c = get_transformation(gt, out, True)
-        #     out = (b * out.dot(T)) + c
-        #
-        #     outputs_use[ba, :] = out.reshape(1, 51)
+        if procrustes:
+            for ba in range(inps.size(0)):
+                gt = targets_use[ba].reshape(-1, 3)
+                out = outputs_use[ba].reshape(-1, 3)
+                _, Z, T, b, c = get_transformation(gt, out, True)
+                out = (b * out.dot(T)) + c
+                outputs_use[ba, :] = out.reshape(1, 51)
 
         sqerr = (outputs_use - targets_use) ** 2
 

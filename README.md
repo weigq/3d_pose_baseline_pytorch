@@ -4,6 +4,8 @@ A PyTorch implementation of a simple baseline for 3d human pose estimation.
 You can check the origin Tensorflow implementation written by [Julieta Martinez et al.](https://github.com/una-dinosauria/3d-pose-baseline).
 Some codes for data processing are brought from the origin version, thanks to the authors.
 
+<!-- ![demo](./img/demo.jpg) -->
+
 This is the code for the paper
 
 ```
