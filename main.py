@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import print_function
-from __future__ import absolute_import
-from __future__ import division
+from __future__ import print_function, absolute_import, division
 
 import os
-from pprint import pprint
+import sys
 import time
+from pprint import pprint
 import numpy as np
 
 import torch
@@ -21,15 +20,10 @@ import src.loader as loader
 from src import Bar
 import src.utils as utils
 import src.misc as misc
+import src.log as log
 
 from src.model.model import LinearModel, weight_init
-import src.log as log
-from src.dataset.datasets_basic import Human36M
-
-
-stat_3d = torch.load('./data/stat_3d.pth.tar')
-std_3d = Variable(torch.from_numpy(stat_3d['std'][stat_3d['dim_use']]).float().cuda())
-mean_3d = Variable(torch.from_numpy(stat_3d['mean'][stat_3d['dim_use']]).float().cuda())
+from src.datasets.human36m import Human36M
 
 
 def main(opt):
@@ -75,21 +69,44 @@ def main(opt):
 
     # data loading
     print(">>> loading data")
-    if opt.is_train:
-        test_loader = DataLoader(
-            dataset=Human36M(actions=actions, data_path=opt.data_dir, use_hg=opt.use_sh, is_train=False),
-            batch_size=opt.test_batch,
-            shuffle=False,
-            num_workers=opt.job,
-            pin_memory=True)
-        # loss_test, err_test = test(test_loader, model, criterion)
-        # os._exit(0)
-        train_loader = DataLoader(
-            dataset=Human36M(actions=actions, data_path=opt.data_dir, use_hg=opt.use_sh),
-            batch_size=opt.train_batch,
-            shuffle=True,
-            num_workers=opt.job,
-            pin_memory=True)
+    # load statistics data
+    stat_3d = torch.load(os.path.join(opt.data_dir, 'stat_3d.pth.tar'))
+    std_3d = stat_3d['std'][stat_3d['dim_use']]
+    mean_3d = stat_3d['mean'][stat_3d['dim_use']]
+    # load dataset
+    if opt.test:
+        err_set = []
+        for action in actions:
+            print (">>> TEST on _{}_".format(action))
+            test_loader = DataLoader(
+                dataset=Human36M(actions=action, data_path=opt.data_dir, use_hg=opt.use_sh, is_train=False),
+                batch_size=opt.test_batch,
+                shuffle=False,
+                num_workers=opt.job,
+                pin_memory=True)
+            _, err_test = test(test_loader, model, criterion, mean_3d, std_3d)
+            err_set.append(err_test)
+        print (">>>>>> TEST results:")
+        for action in actions:
+            print ("{}".format(action), end='\t')
+        print ("\n")
+        for err in err_set:
+            print ("{:.4f}".format(err), end='\t')
+        print (">>>\nERRORS: {}".format(np.array(err_set).mean()))
+        sys.exit()
+
+    test_loader = DataLoader(
+        dataset=Human36M(actions=actions, data_path=opt.data_dir, use_hg=opt.use_hg, is_train=False),
+        batch_size=opt.test_batch,
+        shuffle=False,
+        num_workers=opt.job,
+        pin_memory=True)
+    train_loader = DataLoader(
+        dataset=Human36M(actions=actions, data_path=opt.data_dir, use_hg=opt.use_hg),
+        batch_size=opt.train_batch,
+        shuffle=True,
+        num_workers=opt.job,
+        pin_memory=True)
     print(">>> data loaded !")
 
     cudnn.benchmark = True
@@ -132,7 +149,7 @@ def main(opt):
     logger.close()
 
 
-def test(test_loader, model, criterion):
+def test(test_loader, model, criterion, mean_3d, std_3d):
     losses = utils.AverageMeter()
 
     model.eval()
