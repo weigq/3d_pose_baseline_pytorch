@@ -16,6 +16,7 @@
 
 # for data and experiments directories
 ckpt/
+checkpoint/
 data/
 h36m/
 h36m_ft/
