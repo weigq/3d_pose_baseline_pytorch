@@ -84,7 +84,7 @@ def main(opt):
                 shuffle=False,
                 num_workers=opt.job,
                 pin_memory=True)
-            _, err_test = test(test_loader, model, criterion, stat_3d)
+            _, err_test = test(test_loader, model, criterion, stat_3d, procrustes=opt.procrustes)
             err_set.append(err_test)
         print (">>>>>> TEST results:")
         for action in actions:
@@ -116,43 +116,89 @@ def main(opt):
         print('>>> epoch: {} | lr: {:.5f}'.format(epoch + 1, lr_now))
 
         # per epoch
-        # glob_step, lr_now, loss_train = train(
-        #     train_loader, model, criterion, optimizer,
-        #     lr_init=opt.lr, lr_now=lr_now, glob_step=glob_step, lr_decay=opt.lr_decay, gamma=opt.lr_gamma)
-        # loss_test, err_test = test(test_loader, model, criterion)
+        glob_step, lr_now, loss_train = train(
+            train_loader, model, criterion, optimizer,
+            lr_init=opt.lr, lr_now=lr_now, glob_step=glob_step, lr_decay=opt.lr_decay, gamma=opt.lr_gamma,
+            max_norm=opt.max_norm)
+        loss_test, err_test = test(test_loader, model, criterion, stat_3d, procrustes=opt.procrustes)
 
         # update log file
-        # logger.append([epoch + 1, lr_now, loss_train, loss_test, err_test],
-        #               ['int', 'float', 'float', 'flaot', 'float'])
+        logger.append([epoch + 1, lr_now, loss_train, loss_test, err_test],
+                      ['int', 'float', 'float', 'flaot', 'float'])
 
         # save ckpt
-        # is_best = err_test < err_best
-        # err_best = min(err_test, err_best)
-        # if is_best:
-        #     log.save_ckpt({'epoch': epoch + 1,
-        #                    'lr': lr_now,
-        #                    'step': glob_step,
-        #                    'err': err_best,
-        #                    'state_dict': model.state_dict(),
-        #                    'optimizer': optimizer.state_dict()},
-        #                   ckpt_path=opt.ckpt,
-        #                   is_best=True)
-        # else:
-        #     log.save_ckpt({'epoch': epoch + 1,
-        #                    'lr': lr_now,
-        #                    'step': glob_step,
-        #                    'err': err_best,
-        #                    'state_dict': model.state_dict(),
-        #                    'optimizer': optimizer.state_dict()},
-        #                   ckpt_path=opt.ckpt,
-        #                   is_best=False)
+        is_best = err_test < err_best
+        err_best = min(err_test, err_best)
+        if is_best:
+            log.save_ckpt({'epoch': epoch + 1,
+                           'lr': lr_now,
+                           'step': glob_step,
+                           'err': err_best,
+                           'state_dict': model.state_dict(),
+                           'optimizer': optimizer.state_dict()},
+                          ckpt_path=opt.ckpt,
+                          is_best=True)
+        else:
+            log.save_ckpt({'epoch': epoch + 1,
+                           'lr': lr_now,
+                           'step': glob_step,
+                           'err': err_best,
+                           'state_dict': model.state_dict(),
+                           'optimizer': optimizer.state_dict()},
+                          ckpt_path=opt.ckpt,
+                          is_best=False)
 
     logger.close()
 
 
+def train(train_loader, model, criterion, optimizer,
+          lr_init=None, lr_now=None, glob_step=None, lr_decay=None, gamma=None,
+          max_norm=True):
+    losses = utils.AverageMeter()
+
+    model.train()
+
+    start = time.time()
+    batch_time = 0
+    bar = Bar('>>>', fill='>', max=len(train_loader))
+
+    for i, (inps, tars) in enumerate(train_loader):
+        glob_step += 1
+        if glob_step % lr_decay == 0 or glob_step == 1:
+            lr_now = utils.lr_decay(optimizer, glob_step, lr_init, lr_decay, gamma)
+        inputs = Variable(inps.cuda())
+        targets = Variable(tars.cuda(async=True))
+
+        outputs = model(inputs)
+
+        # calculate loss
+        optimizer.zero_grad()
+        loss = criterion(outputs, targets)
+        losses.update(loss.data[0], inputs.size(0))
+        loss.backward()
+        if max_norm:
+            nn.utils.clip_grad_norm(model.parameters(), max_norm=1)
+        optimizer.step()
+
+        # update summary
+        if (i + 1) % 100 == 0:
+            batch_time = time.time() - start
+            start = time.time()
+
+        bar.suffix = '({batch}/{size}) | batch: {batchtime:.4}ms | Total: {ttl} | ETA: {eta:} | loss: {loss:.4f}' \
+            .format(batch=i + 1,
+                    size=len(train_loader),
+                    batchtime=batch_time * 10.0,
+                    ttl=bar.elapsed_td,
+                    eta=bar.eta_td,
+                    loss=losses.avg)
+        bar.next()
+
+    bar.finish()
+    return glob_step, lr_now, losses.avg
+
+
 def test(test_loader, model, criterion, stat_3d, procrustes=False):
-    std_3d = stat_3d['std'][stat_3d['dim_use']]
-    mean_3d = stat_3d['mean'][stat_3d['dim_use']]
     losses = utils.AverageMeter()
 
     model.eval()
@@ -160,7 +206,7 @@ def test(test_loader, model, criterion, stat_3d, procrustes=False):
     all_dist = []
     start = time.time()
     batch_time = 0
-    bar = Bar('>>>', max=len(test_loader))
+    bar = Bar('>>>', fill='>', max=len(test_loader))
 
     for i, (inps, tars) in enumerate(test_loader):
         inputs = Variable(inps.cuda())
