@@ -31,7 +31,7 @@ This is the code for the paper
 
 ## Dependencies
 
-* [h5py](http://www.h5py.org/)
+* ~~[h5py](http://www.h5py.org/)~~
 * [PyTorch](http://pytorch.org/) >= 3.0.0
 
 ## Installation
