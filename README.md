@@ -40,7 +40,7 @@ This is the code for the paper
     ```
     git clone --recursive https://github.com/weigq/3d_pose_baseline_pytorch.git
     ```
-2. Download the pre-processed [Human3.6M](https://drive.google.com/file/d/11l53VgNPDxV5EZP-GhyGlMAX5pWsN7WH/view?usp=sharing) dataset in 3d joints:
+2. Download the pre-processed [Human3.6M](https://drive.google.com/file/d/1IbVK2fXcr77JyI_ntyRV6OvoLwoMSq3a/view?usp=sharing) dataset in 3d joints:
     ```
     unzip human36m.zip
     rm h36m.zip
