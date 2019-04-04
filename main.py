@@ -174,7 +174,7 @@ def train(train_loader, model, criterion, optimizer,
         # calculate loss
         optimizer.zero_grad()
         loss = criterion(outputs, targets)
-        losses.update(loss.data[0], inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
         loss.backward()
         if max_norm:
             nn.utils.clip_grad_norm(model.parameters(), max_norm=1)
@@ -218,7 +218,7 @@ def test(test_loader, model, criterion, stat_3d, procrustes=False):
         outputs_coord = outputs
         loss = criterion(outputs_coord, targets)
 
-        losses.update(loss.data[0], inputs.size(0))
+        losses.update(loss.item(), inputs.size(0))
 
         tars = targets
 
