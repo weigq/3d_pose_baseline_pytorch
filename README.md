@@ -1,8 +1,8 @@
 # 3d_pose_baseline_pytorch
 
 A PyTorch implementation of a simple baseline for 3d human pose estimation.
-You can check the origin Tensorflow implementation written by [Julieta Martinez et al.](https://github.com/una-dinosauria/3d-pose-baseline).
-Some codes for data processing are brought from the origin version, thanks to the authors.
+You can check the original Tensorflow implementation written by [Julieta Martinez et al.](https://github.com/una-dinosauria/3d-pose-baseline).
+Some codes for data processing are brought from the original version, thanks to the authors.
 
 <!-- ![demo](./img/demo.jpg) -->
 
@@ -32,7 +32,7 @@ This is the code for the paper
 ## Dependencies
 
 * ~~[h5py](http://www.h5py.org/)~~
-* [PyTorch](http://pytorch.org/) >= 3.0.0
+* [PyTorch](http://pytorch.org/) >= 1.0.0
 
 ## Installation
 
@@ -85,7 +85,7 @@ This is the code for the paper
 
 ### Test
 
-1. You can download the [pretrianed model](https://drive.google.com/file/d/1NUY8oZoLKY9DP63Jg_ZE96_DEJKiVvRp/view?usp=sharing) on ground-truth 2d pose for quick demo.
+1. You can download the [pretrained model](https://drive.google.com/file/d/1NUY8oZoLKY9DP63Jg_ZE96_DEJKiVvRp/view?usp=sharing) on ground-truth 2d pose for a quick demo.
 
     ```
     python main.py --load $PATH_TO_gt_ckpt_best.pth.tar --test
